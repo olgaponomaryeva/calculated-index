@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расчет вероятности госпитализации</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #007BFF, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0056b3, #007BFF);
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Расчет вероятности госпитализации</h1>
+        <div class="input-group">
+            <label for="galectin3">Галектин-3 (нг/мл):</label>
+            <input type="number" id="galectin3" placeholder="Введите значение от 0 до 10">
+            <div class="error" id="galectin3Error"></div>
+        </div>
+        <div class="input-group">
+            <label for="skf">СКФ (мл/мин/1,73м²):</label>
+            <input type="number" id="skf" placeholder="Введите значение от 0 до 90">
+            <div class="error" id="skfError"></div>
+        </div>
+        <div class="input-group">
+            <label for="charlsonIndex">Индекс Чарльсона (баллы):</label>
+            <input type="number" id="charlsonIndex" placeholder="Введите значение от 0 до 37">
+            <div class="error" id="charlsonIndexError"></div>
+        </div>
+        <div class="input-group">
+            <label for="h2fpef">H2FPEF (баллы):</label>
+            <input type="number" id="h2fpef" placeholder="Введите значение от 0 до 9">
+            <div class="error" id="h2fpefError"></div>
+        </div>
+        <button onclick="calculateProbability()">Рассчитать вероятность</button>
+        <button onclick="clearForm()" style="background: linear-gradient(135deg, #6c757d, #5a6268);">Очистить форму</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function logisticProbability(z) {
+            return 1 / (1 + Math.exp(-z));
+        }
+
+        function calculateZ(galectin3, skf, charlsonIndex, h2fpef) {
+            return 8.909 + (-2.406) * galectin3 + (-0.111) * skf + (-0.996) * charlsonIndex + 0.747 * h2fpef;
+        }
+
+        function validateInput(value, min, max, fieldName) {
+            if (isNaN(value) || value < min || value > max) {
+                return `Пожалуйста, введите значение от ${min} до ${max} для ${fieldName}.`;
+            }
+            return null;
+        }
+
+        function calculateProbability() {
+            // Получаем значения из полей ввода
+            const galectin3 = parseFloat(document.getElementById('galectin3').value);
+            const skf = parseFloat(document.getElementById('skf').value);
+            const charlsonIndex = parseFloat(document.getElementById('charlsonIndex').value);
+            const h2fpef = parseFloat(document.getElementById('h2fpef').value);
+
+            // Валидация
+            const galectin3Error = validateInput(galectin3, 0, 10, "Галектин-3");
+            const skfError = validateInput(skf, 0, 90, "СКФ");
+            const charlsonIndexError = validateInput(charlsonIndex, 0, 37, "Индекса Чарльсона");
+            const h2fpefError = validateInput(h2fpef, 0, 9, "H2FPEF");
+
+            // Отображение ошибок
+            document.getElementById('galectin3Error').textContent = galectin3Error || '';
+            document.getElementById('skfError').textContent = skfError || '';
+            document.getElementById('charlsonIndexError').textContent = charlsonIndexError || '';
+            document.getElementById('h2fpefError').textContent = h2fpefError || '';
+
+            // Если есть ошибки, останавливаем выполнение
+            if (galectin3Error || skfError || charlsonIndexError || h2fpefError) {
+                return;
+            }
+
+            // Вычисляем z
+            const z = calculateZ(galectin3, skf, charlsonIndex, h2fpef);
+
+            // Вычисляем вероятность
+            const probability = logisticProbability(z);
+
+            // Выводим результат
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = `Вероятность повторной сердечно-сосудистой госпитализации в ближайшие 6 месяцев: ${(probability * 100).toFixed(2)}%`;
+        }
+
+        function clearForm() {
+            // Очищаем поля ввода
+            document.getElementById('galectin3').value = '';
+            document.getElementById('skf').value = '';
+            document.getElementById('charlsonIndex').value = '';
+            document.getElementById('h2fpef').value = '';
+
+            // Очищаем сообщения об ошибках
+            document.getElementById('galectin3Error').textContent = '';
+            document.getElementById('skfError').textContent = '';
+            document.getElementById('charlsonIndexError').textContent = '';
+            document.getElementById('h2fpefError').textContent = '';
+
+            // Очищаем результат
+            document.getElementById('result').textContent = '';
+        }
+    </script>
+</body>
+</html>
