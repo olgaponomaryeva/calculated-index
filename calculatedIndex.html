@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Расчет вероятности госпитализации</title>
     <style>
+        /* Общие стили */
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
@@ -13,8 +14,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
         }
+
         .container {
             background: white;
             padding: 30px;
@@ -25,21 +27,25 @@
             text-align: center;
             animation: fadeIn 1s ease-in-out;
         }
+
         h1 {
             margin-bottom: 20px;
             font-size: 24px;
             color: #333;
         }
+
         .input-group {
             margin-bottom: 20px;
             text-align: left;
         }
+
         .input-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
             color: #555;
         }
+
         .input-group input {
             width: 100%;
             padding: 10px;
@@ -47,11 +53,14 @@
             border-radius: 8px;
             font-size: 16px;
             transition: border-color 0.3s ease;
+            box-sizing: border-box;
         }
+
         .input-group input:focus {
             border-color: #007BFF;
             outline: none;
         }
+
         button {
             width: 100%;
             padding: 12px;
@@ -64,13 +73,16 @@
             transition: background 0.3s ease, transform 0.2s ease;
             margin-bottom: 10px;
         }
+
         button:hover {
             background: linear-gradient(135deg, #0056b3, #007BFF);
             transform: translateY(-2px);
         }
+
         button:active {
             transform: translateY(0);
         }
+
         .result {
             margin-top: 20px;
             font-size: 18px;
@@ -81,12 +93,19 @@
             border-radius: 8px;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
             animation: fadeIn 0.5s ease-in-out;
+            display: none;
         }
+
+        .result.show {
+            display: block;
+        }
+
         .error {
             color: red;
             font-size: 14px;
             margin-top: 5px;
         }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -97,6 +116,72 @@
                 transform: translateY(0);
             }
         }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                border-radius: 10px;
+                max-width: 90%; /* Уже для мобильных экранов */
+                margin-left: 15px;
+                margin-right: 15px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .input-group label {
+                font-size: 16px;
+            }
+
+            .input-group input {
+                font-size: 16px;
+                padding: 10px;
+            }
+
+            button {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            .result {
+                font-size: 17px;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+                max-width: 95%; /* Еще уже для очень маленьких экранов */
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .input-group label {
+                font-size: 15px;
+            }
+
+            .input-group input {
+                font-size: 15px;
+                padding: 8px;
+            }
+
+            button {
+                font-size: 15px;
+                padding: 10px;
+            }
+
+            .result {
+                font-size: 15px;
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -104,30 +189,62 @@
         <h1>Расчет вероятности госпитализации</h1>
         <div class="input-group">
             <label for="galectin3">Галектин-3 (нг/мл):</label>
-            <input type="number" id="galectin3" placeholder="Введите значение от 0 до 10">
+            <input type="text" id="galectin3" placeholder="Введите значение от 0 до 10">
             <div class="error" id="galectin3Error"></div>
         </div>
         <div class="input-group">
             <label for="skf">СКФ (мл/мин/1,73м²):</label>
-            <input type="number" id="skf" placeholder="Введите значение от 0 до 90">
+            <input type="text" id="skf" placeholder="Введите значение от 0 до 90">
             <div class="error" id="skfError"></div>
         </div>
         <div class="input-group">
-            <label for="charlsonIndex">Индекс Чарльсона (баллы):</label>
-            <input type="number" id="charlsonIndex" placeholder="Введите значение от 0 до 37">
+            <label for="charlsonIndex">Индекс Чарлсон (баллы):</label>
+            <input type="text" id="charlsonIndex" placeholder="Введите значение от 0 до 37">
             <div class="error" id="charlsonIndexError"></div>
         </div>
         <div class="input-group">
             <label for="h2fpef">H2FPEF (баллы):</label>
-            <input type="number" id="h2fpef" placeholder="Введите значение от 0 до 9">
+            <input type="text" id="h2fpef" placeholder="Введите значение от 0 до 9">
             <div class="error" id="h2fpefError"></div>
         </div>
         <button onclick="calculateProbability()">Рассчитать вероятность</button>
-        <button onclick="clearForm()" style="background: linear-gradient(135deg, #6c757d, #5a6268);">Очистить форму</button>
+        <button id="clearButton" onclick="clearForm()" style="background: linear-gradient(135deg, #6c757d, #5a6268); display: none;">Очистить форму</button>
         <div class="result" id="result"></div>
     </div>
 
     <script>
+        // Проверка, все ли поля пустые
+        function checkIfAllEmpty() {
+            const galectin3 = document.getElementById('galectin3').value.trim();
+            const skf = document.getElementById('skf').value.trim();
+            const charlsonIndex = document.getElementById('charlsonIndex').value.trim();
+            const h2fpef = document.getElementById('h2fpef').value.trim();
+            const clearButton = document.getElementById('clearButton');
+            
+            if (galectin3 === '' && skf === '' && charlsonIndex === '' && h2fpef === '') {
+                clearButton.style.display = 'none';
+            } else {
+                clearButton.style.display = 'block';
+            }
+        }
+
+        // Ограничение ввода только числами
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['galectin3', 'skf', 'charlsonIndex', 'h2fpef'];
+            inputs.forEach(function(id) {
+                const input = document.getElementById(id);
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+                    const parts = this.value.split('.');
+                    if (parts.length > 2) {
+                        this.value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    checkIfAllEmpty();
+                });
+            });
+            checkIfAllEmpty();
+        });
+
         function logisticProbability(z) {
             return 1 / (1 + Math.exp(-z));
         }
@@ -137,23 +254,30 @@
         }
 
         function validateInput(value, min, max, fieldName) {
-            if (isNaN(value) || value < min || value > max) {
+            // Проверяем, что значение является числом
+            if (isNaN(value) || value === '') {
+                return `Пожалуйста, введите числовое значение для ${fieldName}.`;
+            }
+
+            // Проверяем, что значение находится в допустимом диапазоне
+            if (value < min || value > max) {
                 return `Пожалуйста, введите значение от ${min} до ${max} для ${fieldName}.`;
             }
+
             return null;
         }
 
         function calculateProbability() {
             // Получаем значения из полей ввода
-            const galectin3 = parseFloat(document.getElementById('galectin3').value);
-            const skf = parseFloat(document.getElementById('skf').value);
-            const charlsonIndex = parseFloat(document.getElementById('charlsonIndex').value);
-            const h2fpef = parseFloat(document.getElementById('h2fpef').value);
+            const galectin3 = parseFloat(document.getElementById('galectin3').value.replace(',', '.'));
+            const skf = parseFloat(document.getElementById('skf').value.replace(',', '.'));
+            const charlsonIndex = parseFloat(document.getElementById('charlsonIndex').value.replace(',', '.'));
+            const h2fpef = parseFloat(document.getElementById('h2fpef').value.replace(',', '.'));
 
             // Валидация
             const galectin3Error = validateInput(galectin3, 0, 10, "Галектин-3");
             const skfError = validateInput(skf, 0, 90, "СКФ");
-            const charlsonIndexError = validateInput(charlsonIndex, 0, 37, "Индекса Чарльсона");
+            const charlsonIndexError = validateInput(charlsonIndex, 0, 37, "Индекса Чарлсон");
             const h2fpefError = validateInput(h2fpef, 0, 9, "H2FPEF");
 
             // Отображение ошибок
@@ -176,6 +300,7 @@
             // Выводим результат
             const resultElement = document.getElementById('result');
             resultElement.textContent = `Вероятность повторной сердечно-сосудистой госпитализации в ближайшие 6 месяцев: ${(probability * 100).toFixed(2)}%`;
+            resultElement.classList.add('show');
         }
 
         function clearForm() {
@@ -191,8 +316,13 @@
             document.getElementById('charlsonIndexError').textContent = '';
             document.getElementById('h2fpefError').textContent = '';
 
-            // Очищаем результат
-            document.getElementById('result').textContent = '';
+            // Очищаем результат и скрываем его
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = '';
+            resultElement.classList.remove('show');
+            
+            // Скрываем кнопку очистки, так как все поля пустые
+            checkIfAllEmpty();
         }
     </script>
 </body>
